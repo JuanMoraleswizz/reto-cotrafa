@@ -1,7 +1,6 @@
 # reto_cotrafa
 
-A new Flutter project.
-
+Esta aplicaicon gestiona un inventarios y los productos que tiene cada inventario
 ## Getting Started
 
 This project is a starting point for a Flutter application.
