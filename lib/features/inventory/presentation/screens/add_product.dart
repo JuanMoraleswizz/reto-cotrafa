@@ -29,55 +29,89 @@ class _AddProductPageState extends State<AddProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Agregar Producto")),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: "Nombre del Producto"),
-                validator: (value) =>
-                    value!.isEmpty ? "Campo obligatorio" : null,
-              ),
-              TextFormField(
-                controller: _barcodeController,
-                decoration: InputDecoration(labelText: "Código de Barras"),
-              ),
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(labelText: "Precio"),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _quantityController,
-                decoration: InputDecoration(labelText: "Cantidad"),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final newProduct = Product(
-                      id: Uuid().v4(),
-                      inventoryId: inventaryId,
-                      name: _nameController.text,
-                      barcode: _barcodeController.text,
-                      price: double.tryParse(_priceController.text) ?? 0.0,
-                      quantity: int.tryParse(_quantityController.text) ?? 0,
-                    );
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 600) {
+            return _buildDesktopView();
+          } else {
+            return _buildMobileView();
+          }
+        },
+      ),
+    );
+  }
 
-                    context.read<ProductBloc>().add(AddProduct(newProduct));
+  Widget _buildMobileView() {
+    return Padding(
+      padding: EdgeInsets.all(16.0),
+      child: _buildForm(),
+    );
+  }
 
-                    context.go('/products/${widget.inventoryId}');
-                  }
-                },
-                child: Text("Guardar Producto"),
-              ),
-            ],
+  Widget _buildDesktopView() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        child: Card(
+          elevation: 4,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: EdgeInsets.only(top: 50),
+          child: Container(
+            width: 500,
+            padding: EdgeInsets.all(24),
+            child: _buildForm(),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: "Nombre del Producto"),
+            validator: (value) => value!.isEmpty ? "Campo obligatorio" : null,
+          ),
+          TextFormField(
+            controller: _barcodeController,
+            decoration: InputDecoration(labelText: "Código de Barras"),
+          ),
+          TextFormField(
+            controller: _priceController,
+            decoration: InputDecoration(labelText: "Precio"),
+            keyboardType: TextInputType.number,
+          ),
+          TextFormField(
+            controller: _quantityController,
+            decoration: InputDecoration(labelText: "Cantidad"),
+            keyboardType: TextInputType.number,
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final newProduct = Product(
+                  id: Uuid().v4(),
+                  inventoryId: widget.inventoryId,
+                  name: _nameController.text,
+                  barcode: _barcodeController.text,
+                  price: double.tryParse(_priceController.text) ?? 0.0,
+                  quantity: int.tryParse(_quantityController.text) ?? 0,
+                );
+
+                context.read<ProductBloc>().add(AddProduct(newProduct));
+                context.go('/products/${widget.inventoryId}');
+              }
+            },
+            child: Text("Guardar Producto"),
+          ),
+        ],
       ),
     );
   }

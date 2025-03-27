@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:reto_cotrafa/features/inventory/domain/entity/product.dart';
 import 'package:reto_cotrafa/features/inventory/presentation/blocs/product/product_bloc.dart';
 import 'package:reto_cotrafa/features/inventory/presentation/blocs/product/product_event.dart';
-import 'package:reto_cotrafa/features/inventory/presentation/widgets/menu_component.dart';
 
 class EditProductPage extends StatefulWidget {
   final Product product;
@@ -41,74 +41,107 @@ class _EditProductPageState extends State<EditProductPage> {
     super.dispose();
   }
 
-  void _updateProduct() {
-    if (_formKey.currentState!.validate()) {
-      final updatedProduct = widget.product.copyWith(
-        name: _nameController.text,
-        barcode: _barcodeController.text,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        quantity: int.tryParse(_quantityController.text) ?? 0,
-      );
-
-      // Enviar el evento al Bloc
-      context.read<ProductBloc>().add(UpdateProduct(updatedProduct));
-      context
-          .read<ProductBloc>()
-          .add(LoadProducts(inventoryId: widget.product.inventoryId));
-
-      // Volver atrás después de guardar
-      Navigator.pop(context, true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Editar Producto")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Nombre"),
-                validator: (value) =>
-                    value!.isEmpty ? "El nombre es obligatorio" : null,
-              ),
-              TextFormField(
-                controller: _barcodeController,
-                decoration:
-                    const InputDecoration(labelText: "Código de barras"),
-                validator: (value) => value!.isEmpty
-                    ? "El código de barras es obligatorio"
-                    : null,
-              ),
-              TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(labelText: "Precio"),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? "El precio es obligatorio" : null,
-              ),
-              TextFormField(
-                controller: _quantityController,
-                decoration: const InputDecoration(labelText: "Cantidad"),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? "La cantidad es obligatoria" : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _updateProduct,
-                child: const Text("Guardar Cambios"),
-              ),
-            ],
+      appBar: AppBar(title: Text("Editar Producto")),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 600) {
+            return _buildDesktopView();
+          } else {
+            return _buildMobileView();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileView() {
+    return Padding(
+      padding: EdgeInsets.all(16.0),
+      child: _buildForm(),
+    );
+  }
+
+  Widget _buildDesktopView() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        child: Card(
+          elevation: 4,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: EdgeInsets.only(top: 50),
+          child: Container(
+            width: 500,
+            padding: EdgeInsets.all(24),
+            child: _buildForm(),
           ),
         ),
       ),
-      drawer: MenuComponent(),
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: "Nombre del Producto"),
+            validator: (value) => value!.isEmpty ? "Campo obligatorio" : null,
+          ),
+          TextFormField(
+            controller: _barcodeController,
+            decoration: InputDecoration(labelText: "Código de Barras"),
+          ),
+          TextFormField(
+            controller: _priceController,
+            decoration: InputDecoration(labelText: "Precio"),
+            keyboardType: TextInputType.number,
+          ),
+          TextFormField(
+            controller: _quantityController,
+            decoration: InputDecoration(labelText: "Cantidad"),
+            keyboardType: TextInputType.number,
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade200),
+                onPressed: () => context.pop(),
+                child: Text("Cancelar"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade200),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final updatedProduct = widget.product.copyWith(
+                      name: _nameController.text,
+                      barcode: _barcodeController.text,
+                      price: double.tryParse(_priceController.text) ?? 0.0,
+                      quantity: int.tryParse(_quantityController.text) ?? 0,
+                    );
+
+                    context
+                        .read<ProductBloc>()
+                        .add(UpdateProduct(updatedProduct));
+                    context.pop();
+                  }
+                },
+                child: Text("Guardar Cambios"),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
